@@ -103,11 +103,11 @@
 <script>
 // === ATUR HADIAH DI SINI === (weight = peluang relatif; tier: c = biru, r = ungu, l = merah)
 var PRIZES = [
-  { icon:'🐟', name:'20 Token',    weight:50, tier:'c' },
-  { icon:'🐠', name:'30 Token',    weight:30, tier:'c' },
-  { icon:'🦐', name:'75 Token',    weight:10, tier:'r' },
-  { icon:'🐡', name:'100 Token',   weight:5, tier:'r' },
-  { icon:'🦀', name:'200 Token',   weight:2, tier:'l' },
+  { icon:'🪙', name:'20 Token',    weight:50, tier:'c' },
+  { icon:'🪙', name:'30 Token',    weight:30, tier:'c' },
+  { icon:'🪙', name:'75 Token',    weight:10, tier:'r' },
+  { icon:'🪙', name:'100 Token',   weight:5, tier:'r' },
+  { icon:'🪙', name:'200 Token',   weight:2, tier:'l' },
 ];
 
 var $ = function (id) { return document.getElementById(id); };
@@ -171,7 +171,7 @@ function done(w, win) {
     $('mText').textContent = 'Selamat, kamu memenangkan ' + p.name + '. Putar lagi untuk hadiah lainnya!';
     $('modal').classList.add('show'); $('mClose').focus();
     spinning = false; $('spin').disabled = false;
-  }, 900);
+  }, 500);
 }
 
 function render() {
