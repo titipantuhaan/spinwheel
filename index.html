@@ -3,187 +3,194 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="description" content="Spin Wheel - Putar dan menangkan hadiah ikan menarik!">
-<title>🎰 Spin Wheel - Win Fish Rewards!</title>
-<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<meta name="description" content="Lucky Wheel - Putar dan menangkan hadiah ikan menarik!">
+<title>🎰 Lucky Wheel - Win Fish Rewards!</title>
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap" rel="stylesheet">
 <style>
-  :root { --deep:#06223a; --sea:#0b4a6f; --teal:#12b5b0; --coral:#ff6b4a; --sand:#ffe3b0; --foam:#e9fbff; }
+  :root { --tw:110px; }
   * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   html, body { margin:0; min-height:100%; }
   body {
-    font-family:'Baloo 2', system-ui, sans-serif; color:var(--foam); text-align:center;
-    background:radial-gradient(ellipse at 50% -10%, #1b79a8 0, var(--sea) 40%, var(--deep) 100%) fixed;
-    display:flex; flex-direction:column; align-items:center; padding:20px 14px 40px; overflow-x:hidden;
+    font-family:'Lilita One', 'Arial Black', system-ui, sans-serif; color:#fff; text-align:center;
+    background:
+      radial-gradient(ellipse at 50% 40%, transparent 30%, rgba(0,0,0,.65) 100%),
+      repeating-conic-gradient(#5b5b61 0 25%, #505056 0 50%) 0 0/36px 36px;
+    min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px 0 40px; overflow-x:hidden;
   }
-  h1 { margin:6px 0 0; font-size:clamp(28px, 8vw, 40px); font-weight:800; }
-  .sub { margin:0 0 14px; opacity:.85; }
-  .bubbles { position:fixed; inset:0; pointer-events:none; z-index:0; }
-  .bubbles i { position:absolute; bottom:-30px; border-radius:50%; border:2px solid rgba(255,255,255,.35); animation:rise linear infinite; }
-  @keyframes rise { to { transform:translateY(-110vh); opacity:0; } }
-  main { position:relative; z-index:1; width:100%; max-width:440px; }
+  .outline { -webkit-text-stroke:5px #0b1530; paint-order:stroke fill; letter-spacing:.02em; }
 
-  .wheel-wrap { position:relative; width:min(86vw, 380px); aspect-ratio:1; margin:8px auto 0; }
-  canvas { width:100%; height:100%; display:block; filter:drop-shadow(0 12px 22px rgba(0,0,0,.45)); }
-  .pointer {
-    position:absolute; top:-12px; left:50%; width:0; height:0; transform:translateX(-50%); z-index:2;
-    border-left:16px solid transparent; border-right:16px solid transparent; border-top:30px solid var(--coral);
-    filter:drop-shadow(0 3px 2px rgba(0,0,0,.5));
+  .stage { position:relative; width:100%; margin-top:54px; }
+  .label {
+    position:absolute; top:-58px; left:50%; transform:translateX(-50%); z-index:4;
+    background:#2a2a2f; border-radius:14px; padding:6px 22px; font-size:28px; white-space:nowrap;
+    box-shadow:0 4px 0 rgba(0,0,0,.4);
   }
-  .hub {
-    position:absolute; top:50%; left:50%; width:76px; height:76px; transform:translate(-50%,-50%);
-    border-radius:50%; border:5px solid var(--sand); background:var(--coral); color:#fff;
-    font:800 18px 'Baloo 2', sans-serif; cursor:pointer; box-shadow:0 4px 14px rgba(0,0,0,.4);
+  .label::after { content:""; position:absolute; bottom:-9px; left:50%; margin-left:-9px; border:9px solid transparent; border-bottom:0; border-top-color:#2a2a2f; }
+  .gem {
+    position:absolute; top:-14px; left:50%; width:30px; height:38px; margin-left:-15px; z-index:4;
+    clip-path:polygon(0 0, 100% 0, 100% 35%, 50% 100%, 0 35%);
+    background:linear-gradient(135deg, #ff9a8a 0, #ff2b2b 45%, #b30000 100%);
+    filter:drop-shadow(0 3px 0 #5a0b0b);
   }
-  .hub:disabled { filter:grayscale(.5); cursor:default; }
-  .hub:focus-visible, .btn:focus-visible { outline:3px solid #fff; outline-offset:3px; }
+  .view { overflow:hidden; width:100%; padding:14px 0; background:rgba(0,0,0,.28); }
+  .track { display:flex; gap:10px; will-change:transform; }
 
-  .stats { display:flex; gap:10px; justify-content:center; margin:18px 0 8px; }
-  .stat { background:rgba(255,255,255,.1); border-radius:14px; padding:6px 16px; min-width:110px; }
-  .stat b { display:block; font-size:22px; color:var(--sand); }
-  .history { list-style:none; margin:10px 0 0; padding:0; text-align:left; }
-  .history li { background:rgba(255,255,255,.08); border-radius:12px; padding:8px 14px; margin-bottom:6px; display:flex; justify-content:space-between; }
-  .history .empty { justify-content:center; opacity:.7; }
+  .tile {
+    flex:0 0 var(--tw); height:calc(var(--tw) * .92); border-radius:16px; position:relative;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    background:linear-gradient(180deg, #4bb1ff 0, #1d7cf0 55%, #0d56c8 100%);
+    border:4px solid #0b1f5c; box-shadow:inset 0 0 0 3px #9fe0ff, inset 0 -8px 0 rgba(0,0,40,.25), 0 4px 0 rgba(0,0,0,.35);
+  }
+  .tile::before { content:""; position:absolute; top:7px; left:9px; width:14px; height:8px; border-radius:50%; background:rgba(255,255,255,.85); transform:rotate(-20deg); }
+  .tile.r { background:linear-gradient(180deg, #c78cff 0, #8f4ae8 55%, #5d2bb0 100%); box-shadow:inset 0 0 0 3px #e5c8ff, inset 0 -8px 0 rgba(30,0,60,.25), 0 4px 0 rgba(0,0,0,.35); }
+  .tile.l { background:linear-gradient(180deg, #ffe45c 0, #ffb41f 55%, #e07b00 100%); box-shadow:inset 0 0 0 3px #fff3b0, inset 0 -8px 0 rgba(90,40,0,.25), 0 4px 0 rgba(0,0,0,.35); }
+  .tile .ic { font-size:calc(var(--tw) * .36); line-height:1; }
+  .tile .nm { font-size:calc(var(--tw) * .17); line-height:1.05; margin-top:4px; padding:0 4px; -webkit-text-stroke:4px #0b1530; paint-order:stroke fill; text-transform:uppercase; }
+  .tile.win { animation:flash .5s 3; }
+  @keyframes flash { 50% { transform:scale(1.12); filter:brightness(1.3); } }
 
-  .modal { position:fixed; inset:0; z-index:5; display:none; align-items:center; justify-content:center; background:rgba(3,15,28,.75); padding:20px; }
+  .go {
+    margin-top:26px; border:0; border-radius:18px; padding:10px 46px; font:400 34px 'Lilita One', sans-serif; color:#fff; cursor:pointer;
+    background:linear-gradient(180deg, #6df06d, #1fb83a); border:4px solid #0b4a1c; box-shadow:0 6px 0 #0b4a1c; -webkit-text-stroke:4px #0b4a1c; paint-order:stroke fill;
+  }
+  .go:active:not(:disabled) { transform:translateY(4px); box-shadow:0 2px 0 #0b4a1c; }
+  .go:disabled { filter:grayscale(.7); cursor:default; }
+  .go:focus-visible, .btn:focus-visible { outline:3px solid #fff; outline-offset:3px; }
+
+  .stats { display:flex; gap:10px; justify-content:center; margin:22px 0 8px; }
+  .stat { background:rgba(0,0,0,.45); border-radius:14px; padding:6px 16px; min-width:120px; font-size:16px; }
+  .stat b { display:block; font-size:26px; color:#ffe45c; font-weight:400; }
+  .history { list-style:none; margin:8px auto 0; padding:0 14px; width:100%; max-width:420px; text-align:left; font-size:17px; }
+  .history li { background:rgba(0,0,0,.45); border-radius:12px; padding:7px 14px; margin-bottom:6px; display:flex; justify-content:space-between; }
+  .history .empty { justify-content:center; opacity:.75; }
+
+  .modal { position:fixed; inset:0; z-index:9; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.7); padding:20px; }
   .modal.show { display:flex; }
-  .card { background:var(--foam); color:var(--deep); border-radius:24px; padding:26px 22px; width:100%; max-width:340px; animation:pop .5s cubic-bezier(.2,1,.3,1.3); }
+  .card { background:linear-gradient(180deg, #4bb1ff, #0d56c8); border:5px solid #0b1f5c; box-shadow:inset 0 0 0 3px #9fe0ff; border-radius:24px; padding:24px 22px; width:100%; max-width:330px; animation:pop .5s cubic-bezier(.2,1,.3,1.3); }
   @keyframes pop { from { transform:scale(.6); opacity:0; } }
   .card .big { font-size:72px; line-height:1; }
-  .card h2 { margin:6px 0 2px; font-size:28px; }
-  .btn { margin-top:14px; border:0; border-radius:14px; background:var(--coral); color:#fff; font:800 18px 'Baloo 2', sans-serif; padding:10px 28px; cursor:pointer; }
-  @media (prefers-reduced-motion: reduce) { .bubbles { display:none; } .card { animation:none; } }
+  .card h2 { margin:6px 0 2px; font-size:34px; font-weight:400; }
+  .card p { margin:4px 0 0; font-family:system-ui, sans-serif; font-weight:600; }
+  .btn { margin-top:14px; border-radius:14px; background:linear-gradient(180deg, #6df06d, #1fb83a); border:4px solid #0b4a1c; color:#fff; font:400 22px 'Lilita One', sans-serif; padding:6px 30px; cursor:pointer; -webkit-text-stroke:3px #0b4a1c; paint-order:stroke fill; }
+  @media (prefers-reduced-motion: reduce) { .card, .tile.win { animation:none; } }
 </style>
 </head>
 <body>
-<div class="bubbles" id="bubbles" aria-hidden="true"></div>
-<main>
-  <h1>🎰 Spin Wheel</h1>
-  <p class="sub">Putar rodanya, menangkan hadiah ikan!</p>
 
-  <div class="wheel-wrap">
-    <div class="pointer"></div>
-    <canvas id="wheel" width="760" height="760" aria-label="Roda hadiah ikan"></canvas>
-    <button class="hub" id="spin">PUTAR</button>
-  </div>
+<div class="stage">
+  <div class="label outline" style="-webkit-text-stroke:0">LUCKY WHEEL</div>
+  <div class="gem" aria-hidden="true"></div>
+  <div class="view" id="view"><div class="track" id="track" aria-label="Lucky Wheel hadiah ikan"></div></div>
+</div>
 
-  <div class="stats">
-    <div class="stat">Total putaran<b id="count">0</b></div>
-    <div class="stat">Hadiah ikan<b id="wins">0</b></div>
-  </div>
-  <ul class="history" id="history"></ul>
-</main>
+<button class="go" id="spin">SPIN!</button>
+
+<div class="stats">
+  <div class="stat">Total putaran<b id="count">0</b></div>
+  <div class="stat">Hadiah ikan<b id="wins">0</b></div>
+</div>
+<ul class="history" id="history"></ul>
 
 <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
   <div class="card">
     <div class="big" id="mIcon"></div>
-    <h2 id="mTitle"></h2>
+    <h2 id="mTitle" class="outline"></h2>
     <p id="mText"></p>
-    <button class="btn" id="mClose">Tutup</button>
+    <button class="btn" id="mClose">OK</button>
   </div>
 </div>
 
 <script>
-// === ATUR HADIAH DI SINI === (weight = peluang relatif, makin besar makin sering keluar)
+// === ATUR HADIAH DI SINI === (weight = peluang relatif; tier: c = biru, r = ungu, l = emas)
 var PRIZES = [
-  { icon:'🐟', name:'Ikan Lele',    weight:22, color:'#12b5b0' },
-  { icon:'🐠', name:'Ikan Nemo',    weight:16, color:'#ff8a3d' },
-  { icon:'🦐', name:'Udang',        weight:16, color:'#f45b69' },
-  { icon:'🐡', name:'Ikan Buntal',  weight:12, color:'#f2c14e' },
-  { icon:'🦀', name:'Kepiting',     weight:10, color:'#e4572e' },
-  { icon:'🦑', name:'Cumi-cumi',    weight:8,  color:'#7b6cd9' },
-  { icon:'🦈', name:'Ikan Hiu',     weight:4,  color:'#3d85c6' },
-  { icon:'🐳', name:'Paus Emas',    weight:2,  color:'#d4a017' },
+  { icon:'🐟', name:'Ikan Lele',   weight:22, tier:'c' },
+  { icon:'🐠', name:'Ikan Nemo',   weight:16, tier:'c' },
+  { icon:'🦐', name:'Udang',       weight:16, tier:'c' },
+  { icon:'🐡', name:'Ikan Buntal', weight:12, tier:'c' },
+  { icon:'🦀', name:'Kepiting',    weight:10, tier:'r' },
+  { icon:'🦑', name:'Cumi-cumi',   weight:8,  tier:'r' },
+  { icon:'🦈', name:'Ikan Hiu',    weight:4,  tier:'r' },
+  { icon:'🐳', name:'Paus Emas',   weight:2,  tier:'l' },
 ];
-var ZONK = false; // ubah ke true kalau mau ada segmen "Zonk" (tambahkan sendiri di PRIZES)
 
-var cv = document.getElementById('wheel'), ctx = cv.getContext('2d');
-var N = PRIZES.length, SEG = 2 * Math.PI / N, rot = 0, spinning = false;
+var $ = function (id) { return document.getElementById(id); };
+var view = $('view'), track = $('track');
+var GAP = 10, TW = 110, CUR = 5, strip = [], x = 0, spinning = false;
 var state = { count:0, wins:0, history:[] };
-
-try { var saved = JSON.parse(localStorage.getItem('spin-state')); if (saved) state = saved; } catch (e) {}
-function save() { try { localStorage.setItem('spin-state', JSON.stringify(state)); } catch (e) {} }
-
-function draw() {
-  var s = cv.width, c = s / 2, r = c - 14;
-  ctx.clearRect(0, 0, s, s);
-  ctx.save(); ctx.translate(c, c); ctx.rotate(rot);
-  PRIZES.forEach(function (p, i) {
-    ctx.beginPath(); ctx.moveTo(0, 0); ctx.arc(0, 0, r, i * SEG, (i + 1) * SEG); ctx.closePath();
-    ctx.fillStyle = p.color; ctx.fill();
-    ctx.strokeStyle = '#ffe3b0'; ctx.lineWidth = 4; ctx.stroke();
-    ctx.save(); ctx.rotate(i * SEG + SEG / 2);
-    ctx.textAlign = 'right'; ctx.fillStyle = '#fff';
-    ctx.font = '54px serif'; ctx.fillText(p.icon, r - 24, 4);
-    ctx.font = '800 26px "Baloo 2", sans-serif'; ctx.textBaseline = 'middle';
-    ctx.shadowColor = 'rgba(0,0,0,.45)'; ctx.shadowBlur = 4;
-    ctx.fillText(p.name, r - 92, 8);
-    ctx.restore();
-  });
-  ctx.restore();
-  ctx.beginPath(); ctx.arc(c, c, r + 6, 0, 7); ctx.lineWidth = 12; ctx.strokeStyle = '#ffe3b0'; ctx.stroke();
-}
+try { var sv = JSON.parse(localStorage.getItem('lucky-state')); if (sv) state = sv; } catch (e) {}
+function save() { try { localStorage.setItem('lucky-state', JSON.stringify(state)); } catch (e) {} }
 
 function pick() {
-  var total = PRIZES.reduce(function (a, p) { return a + p.weight; }, 0), x = Math.random() * total;
-  for (var i = 0; i < N; i++) { x -= PRIZES[i].weight; if (x < 0) return i; }
+  var total = PRIZES.reduce(function (a, p) { return a + p.weight; }, 0), r = Math.random() * total;
+  for (var i = 0; i < PRIZES.length; i++) { r -= PRIZES[i].weight; if (r < 0) return i; }
   return 0;
+}
+function tileEl(i) {
+  var p = PRIZES[i], d = document.createElement('div');
+  d.className = 'tile ' + p.tier;
+  d.innerHTML = '<div class="ic">' + p.icon + '</div><div class="nm">' + p.name + '</div>';
+  return d;
+}
+function push(i) { strip.push(i); track.appendChild(tileEl(i)); }
+function centerX(i) { return view.clientWidth / 2 - (i * (TW + GAP) + TW / 2); }
+function setX(v) { x = v; track.style.transform = 'translateX(' + v + 'px)'; }
+
+function sizeIt() {
+  TW = Math.round(Math.max(84, Math.min(120, window.innerWidth * 0.27)));
+  document.documentElement.style.setProperty('--tw', TW + 'px');
+  if (!spinning) setX(centerX(CUR));
 }
 
 function spin() {
   if (spinning) return;
-  spinning = true; document.getElementById('spin').disabled = true;
+  spinning = true; $('spin').disabled = true;
   var win = pick();
-  var jitter = (Math.random() - .5) * SEG * .7;
-  var target = -Math.PI / 2 - (win + .5) * SEG + jitter;
-  var twoPi = 2 * Math.PI;
-  var delta = (((target - rot) % twoPi) + twoPi) % twoPi + 6 * twoPi;
-  var start = rot, t0 = performance.now(), dur = 5200;
+  for (var k = 0; k < 40; k++) push(pick());
+  var w = CUR + 30 + Math.floor(Math.random() * 5);
+  strip[w] = win; track.replaceChild(tileEl(win), track.children[w]);
+  var from = x, to = centerX(w) + (Math.random() - .5) * TW * .6, t0 = performance.now(), dur = 5200;
   (function frame(now) {
-    var k = Math.min((now - t0) / dur, 1), e = 1 - Math.pow(1 - k, 4);
-    rot = start + delta * e; draw();
-    if (k < 1) requestAnimationFrame(frame); else done(win);
+    var t = Math.min((now - t0) / dur, 1), e = 1 - Math.pow(1 - t, 4);
+    setX(from + (to - from) * e);
+    if (t < 1) requestAnimationFrame(frame); else done(w, win);
   })(t0);
 }
 
-function done(i) {
-  spinning = false; document.getElementById('spin').disabled = false;
-  var p = PRIZES[i];
+function done(w, win) {
+  // buang tile lama supaya ringan, posisi tampilan tidak berubah
+  var cut = w - CUR;
+  for (var i = 0; i < cut; i++) track.removeChild(track.firstChild);
+  strip.splice(0, cut); setX(x + cut * (TW + GAP));
+  track.children[CUR].classList.add('win');
+
+  var p = PRIZES[win];
   state.count++; state.wins++;
   state.history.unshift({ icon:p.icon, name:p.name, time:new Date().toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' }) });
   state.history = state.history.slice(0, 5);
   save(); render();
-  document.getElementById('mIcon').textContent = p.icon;
-  document.getElementById('mTitle').textContent = p.name + '!';
-  document.getElementById('mText').textContent = 'Selamat, kamu memenangkan ' + p.name + '. Putar lagi untuk hadiah lainnya!';
-  document.getElementById('modal').classList.add('show');
-  document.getElementById('mClose').focus();
+  setTimeout(function () {
+    $('mIcon').textContent = p.icon;
+    $('mTitle').textContent = p.name + '!';
+    $('mText').textContent = 'Selamat, kamu memenangkan ' + p.name + '. Putar lagi untuk hadiah lainnya!';
+    $('modal').classList.add('show'); $('mClose').focus();
+    spinning = false; $('spin').disabled = false;
+  }, 900);
 }
 
 function render() {
-  document.getElementById('count').textContent = state.count;
-  document.getElementById('wins').textContent = state.wins;
-  var ul = document.getElementById('history');
-  ul.innerHTML = state.history.length
+  $('count').textContent = state.count; $('wins').textContent = state.wins;
+  $('history').innerHTML = state.history.length
     ? state.history.map(function (h) { return '<li><span>' + h.icon + ' ' + h.name + '</span><span>' + h.time + '</span></li>'; }).join('')
     : '<li class="empty">Belum ada putaran. Ayo coba!</li>';
 }
 
-document.getElementById('spin').addEventListener('click', spin);
-document.getElementById('mClose').addEventListener('click', function () { document.getElementById('modal').classList.remove('show'); });
-document.addEventListener('keydown', function (e) { if (e.key === 'Escape') document.getElementById('modal').classList.remove('show'); });
+$('spin').addEventListener('click', spin);
+$('mClose').addEventListener('click', function () { $('modal').classList.remove('show'); });
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape') $('modal').classList.remove('show'); });
+window.addEventListener('resize', sizeIt);
 
-// gelembung latar
-(function () {
-  var b = document.getElementById('bubbles');
-  for (var i = 0; i < 14; i++) {
-    var d = document.createElement('i'), s = 8 + Math.random() * 26;
-    d.style.cssText = 'left:' + Math.random() * 100 + '%;width:' + s + 'px;height:' + s + 'px;animation-duration:' + (9 + Math.random() * 14) + 's;animation-delay:-' + Math.random() * 20 + 's';
-    b.appendChild(d);
-  }
-})();
-
-draw(); render();
-if (document.fonts && document.fonts.ready) document.fonts.ready.then(draw);
+for (var n = 0; n < 12; n++) push(pick());
+sizeIt(); render();
 </script>
 </body>
 </html>
