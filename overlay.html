@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lucky Wheel Overlay</title>
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap" rel="stylesheet">
+<style>
+  :root { --tw:130px; }
+  * { box-sizing:border-box; }
+  html, body { margin:0; height:100%; background:transparent; overflow:hidden; }
+  body { font-family:'Lilita One', 'Arial Black', system-ui, sans-serif; color:#fff; text-align:center; }
+  .outline { -webkit-text-stroke:5px #0b1530; paint-order:stroke fill; letter-spacing:.02em; }
+
+  /* seluruh overlay tersembunyi sampai ada putaran */
+  .stage { position:fixed; left:0; right:0; top:50%; margin-top:-90px; opacity:0; transform:translateY(40px) scale(.96); transition:opacity .5s, transform .5s; }
+  .stage.show { opacity:1; transform:none; }
+
+  .label {
+    position:absolute; top:-58px; left:50%; transform:translateX(-50%); z-index:4;
+    background:#2a2a2f; border-radius:14px; padding:6px 22px; font-size:28px; white-space:nowrap; box-shadow:0 4px 0 rgba(0,0,0,.4);
+  }
+  .label::after { content:""; position:absolute; bottom:-9px; left:50%; margin-left:-9px; border:9px solid transparent; border-bottom:0; border-top-color:#2a2a2f; }
+  .gem {
+    position:absolute; top:-14px; left:50%; width:30px; height:38px; margin-left:-15px; z-index:4;
+    clip-path:polygon(0 0, 100% 0, 100% 35%, 50% 100%, 0 35%);
+    background:linear-gradient(135deg, #ff9a8a 0, #ff2b2b 45%, #b30000 100%); filter:drop-shadow(0 3px 0 #5a0b0b);
+  }
+  .view { overflow:hidden; width:100%; padding:14px 0; background:rgba(0,0,0,.35); }
+  .track { display:flex; gap:10px; will-change:transform; }
+
+  .tile {
+    flex:0 0 var(--tw); height:calc(var(--tw) * .92); border-radius:16px; position:relative;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    background:linear-gradient(180deg, #4bb1ff 0, #1d7cf0 55%, #0d56c8 100%);
+    border:4px solid #0b1f5c; box-shadow:inset 0 0 0 3px #9fe0ff, inset 0 -8px 0 rgba(0,0,40,.25), 0 4px 0 rgba(0,0,0,.35);
+  }
+  .tile::before { content:""; position:absolute; top:7px; left:9px; width:14px; height:8px; border-radius:50%; background:rgba(255,255,255,.85); transform:rotate(-20deg); }
+  .tile.r { background:linear-gradient(180deg, #c78cff 0, #8f4ae8 55%, #5d2bb0 100%); box-shadow:inset 0 0 0 3px #e5c8ff, inset 0 -8px 0 rgba(30,0,60,.25), 0 4px 0 rgba(0,0,0,.35); }
+  .tile.l { background:linear-gradient(180deg, #ff8a7a 0, #f0382b 55%, #b01510 100%); box-shadow:inset 0 0 0 3px #ffd0c8, inset 0 -8px 0 rgba(60,0,0,.25), 0 4px 0 rgba(0,0,0,.35); }
+  .tile .ic { font-size:calc(var(--tw) * .36); line-height:1; }
+  .tile .nm { font-size:calc(var(--tw) * .17); line-height:1.05; margin-top:4px; padding:0 4px; -webkit-text-stroke:4px #0b1530; paint-order:stroke fill; text-transform:uppercase; }
+  .tile.win { animation:flash .5s 4; }
+  @keyframes flash { 50% { transform:scale(1.12); filter:brightness(1.3); } }
+
+  .result {
+    position:absolute; left:50%; top:calc(100% + 22px); transform:translateX(-50%) scale(.6); opacity:0; white-space:nowrap;
+    background:linear-gradient(180deg, #4bb1ff, #0d56c8); border:5px solid #0b1f5c; box-shadow:inset 0 0 0 3px #9fe0ff; border-radius:20px; padding:8px 30px; font-size:34px;
+    transition:opacity .3s, transform .5s cubic-bezier(.2,1,.3,1.3);
+  }
+  .result.show { opacity:1; transform:translateX(-50%) scale(1); }
+
+  #test { position:fixed; left:12px; bottom:12px; padding:8px 14px; border:0; border-radius:8px; background:#1fb83a; color:#fff; font:600 14px system-ui, sans-serif; cursor:pointer; display:none; }
+  @media (prefers-reduced-motion: reduce) { .stage, .result { transition:none; } .tile.win { animation:none; } }
+</style>
+</head>
+<body>
+
+<div class="stage" id="stage">
+  <div class="label outline" style="-webkit-text-stroke:0">LUCKY WHEEL</div>
+  <div class="gem" aria-hidden="true"></div>
+  <div class="view" id="view"><div class="track" id="track"></div></div>
+  <div class="result outline" id="result"></div>
+</div>
+<button id="test">Tes putar</button>
+
+<script>
+// === ATUR HADIAH DI SINI === (weight = peluang relatif; tier: c = biru, r = ungu, l = merah)
+var PRIZES = [
+  { icon:'🪙', name:'20 Token',  weight:50, tier:'c' },
+  { icon:'🪙', name:'30 Token',  weight:30, tier:'c' },
+  { icon:'🪙', name:'75 Token',  weight:10, tier:'r' },
+  { icon:'🪙', name:'100 Token', weight:5,  tier:'r' },
+  { icon:'🪙', name:'200 Token', weight:2,  tier:'l' },
+];
+var SPIN_MS = 5200, HOLD_MS = 4500;
+
+var $ = function (id) { return document.getElementById(id); };
+var view = $('view'), track = $('track'), stage = $('stage'), result = $('result');
+var params = new URLSearchParams(location.search);
+var GAP = 10, TW = 130, CUR = 5, strip = [], x = 0, busy = false, queue = [];
+
+function pick() {
+  var total = PRIZES.reduce(function (a, p) { return a + p.weight; }, 0), r = Math.random() * total;
+  for (var i = 0; i < PRIZES.length; i++) { r -= PRIZES[i].weight; if (r < 0) return i; }
+  return 0;
+}
+function tileEl(i) {
+  var p = PRIZES[i], d = document.createElement('div');
+  d.className = 'tile ' + p.tier;
+  d.innerHTML = '<div class="ic">' + p.icon + '</div><div class="nm">' + p.name + '</div>';
+  return d;
+}
+function push(i) { strip.push(i); track.appendChild(tileEl(i)); }
+function centerX(i) { return view.clientWidth / 2 - (i * (TW + GAP) + TW / 2); }
+function setX(v) { x = v; track.style.transform = 'translateX(' + v + 'px)'; }
+function sizeIt() {
+  TW = Math.round(Math.max(90, Math.min(150, window.innerWidth * 0.14)));
+  document.documentElement.style.setProperty('--tw', TW + 'px');
+  if (!busy) setX(centerX(CUR));
+}
+
+function chime() {
+  try {
+    var c = new (window.AudioContext || window.webkitAudioContext)();
+    [523, 659, 784, 1047].forEach(function (f, i) {
+      var o = c.createOscillator(), g = c.createGain(), t = c.currentTime + i * .1;
+      o.type = 'triangle'; o.frequency.value = f;
+      g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.25, t + .02); g.gain.exponentialRampToValueAtTime(.0001, t + .4);
+      o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + .45);
+    });
+  } catch (e) {}
+}
+
+function run() {
+  if (busy || !queue.length) return;
+  busy = true;
+  var job = queue.shift();
+  stage.classList.add('show');
+  setTimeout(function () {
+    var win = pick();
+    for (var k = 0; k < 40; k++) push(pick());
+    var w = CUR + 30 + Math.floor(Math.random() * 5);
+    strip[w] = win; track.replaceChild(tileEl(win), track.children[w]);
+    var from = x, to = centerX(w) + (Math.random() - .5) * TW * .6, t0 = performance.now();
+    (function frame(now) {
+      var t = Math.min((now - t0) / SPIN_MS, 1), e = 1 - Math.pow(1 - t, 4);
+      setX(from + (to - from) * e);
+      if (t < 1) requestAnimationFrame(frame); else finish(w, win, job);
+    })(t0);
+  }, 700);
+}
+
+function finish(w, win, job) {
+  var cut = w - CUR;
+  for (var i = 0; i < cut; i++) track.removeChild(track.firstChild);
+  strip.splice(0, cut); setX(x + cut * (TW + GAP));
+  track.children[CUR].classList.add('win');
+  var p = PRIZES[win];
+  result.textContent = (job.name ? job.name + ' dapat ' : 'Kamu dapat ') + p.name + '!';
+  result.classList.add('show');
+  chime();
+  setTimeout(function () {
+    stage.classList.remove('show'); result.classList.remove('show');
+    setTimeout(function () {
+      var wEl = track.querySelector('.win'); if (wEl) wEl.classList.remove('win');
+      busy = false; run();
+    }, 600);
+  }, HOLD_MS);
+}
+
+// === PEMICU PUTARAN ===
+// 1) dari skrip lain / backend:      triggerSpin('Nama Donatur')
+// 2) lewat postMessage:               {type:'spin', name:'Nama'}
+// 3) polling server (untuk GoPay):   ?poll=https://situs-anda.vercel.app/api/spins  -> JSON [{id, name}, ...]
+window.triggerSpin = function (name) { queue.push({ name: name || '' }); run(); };
+window.addEventListener('message', function (e) { if (e.data && e.data.type === 'spin') window.triggerSpin(e.data.name); });
+
+if (params.get('poll')) {
+  var seen = {}, first = true;
+  setInterval(function () {
+    fetch(params.get('poll'), { cache:'no-store' }).then(function (r) { return r.json(); }).then(function (list) {
+      (list || []).forEach(function (s) {
+        if (seen[s.id]) return; seen[s.id] = 1;
+        if (!first) window.triggerSpin(s.name);
+      });
+      first = false;
+    }).catch(function () {});
+  }, 3000);
+}
+
+if (params.has('test')) {
+  $('test').style.display = 'block';
+  $('test').addEventListener('click', function () { window.triggerSpin('Seseorang'); });
+}
+if (params.get('name')) window.triggerSpin(params.get('name'));
+
+window.addEventListener('resize', sizeIt);
+for (var n = 0; n < 14; n++) push(pick());
+sizeIt();
+</script>
+</body>
+</html>
