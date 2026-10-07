@@ -155,7 +155,6 @@ function setX(v) { x = v; track.style.transform = 'translateX(' + v + 'px)'; }
 function sizeIt() {
   TW = Math.round(Math.max(84, Math.min(120, window.innerWidth * 0.27)));
   document.documentElement.style.setProperty('--tw', TW + 'px');
-  if (!spinning) setX(centerX(CUR));
 }
 
 function spin() {
@@ -216,8 +215,23 @@ $('mClose').addEventListener('click', function () { $('modal').classList.remove(
 document.addEventListener('keydown', function (e) { if (e.key === 'Escape') $('modal').classList.remove('show'); });
 window.addEventListener('resize', sizeIt);
 
-for (var n = 0; n < 12; n++) push(pick());
-sizeIt(); render();
+// preview: token bergulir pelan ke kanan saat tidak sedang spin / popup tertutup
+var last = performance.now(), reduceMotion = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+function idle(now) {
+  var dt = Math.min(now - last, 50); last = now;
+  if (!reduceMotion && !spinning && !$('modal').classList.contains('show')) {
+    var nx = x + dt * 0.06, step = TW + GAP;
+    while (nx > 0) { strip.unshift(pick()); track.insertBefore(tileEl(strip[0]), track.firstChild); nx -= step; }
+    setX(nx);
+    while (strip.length < CUR + 20) push(pick());
+    while (strip.length > CUR + 40) { strip.pop(); track.removeChild(track.lastChild); }
+  }
+  requestAnimationFrame(idle);
+}
+
+for (var n = 0; n < 30; n++) push(pick());
+sizeIt(); setX(centerX(CUR)); render();
+requestAnimationFrame(idle);
 </script>
 </body>
 </html>
